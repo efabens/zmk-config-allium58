@@ -115,9 +115,32 @@ jobs:
 
             ### Flashing Instructions:
             1. Download the appropriate `.uf2` file for each keyboard half
-            2. Connect keyboard via USB while holding the reset button
-            3. Drag and drop the `.uf2` file onto the mounted drive
-            4. Repeat for the other half
+            2. Turn off both shields
+            2. Connect the left shield to your computer and double tap the reset button to enter bootloader mode
+            3. If you are only updating keymaps (no display or settings changes)
+              a. Drag and drop the left `.uf2` file onto the mounted drive
+              b. you will see an error about unmounting (it can be ignored)
+              c. Unplug and restart both shields and it should Connect
+              d. YOU ARE DONE! No need to repeat for the other half
+            4. If you are updating display or settings as well
+              a. Drag and drop the `settings_reset-nice_nano_v2-zmk.uf2` file onto the mounted drive
+              b. you will see an error about unmounting (it can be ignored)
+              c. Unplug left shield
+            5. Connect the right shield to your computer and double tap the reset button to enter bootloader mode
+              a. Drag and drop the `settings_reset-nice_nano_v2-zmk.uf2` file onto the mounted drive
+              b. you will see an error about unmounting (it can be ignored)
+              c. Unplug right shield
+            6. Reconnect left shield to your computer and double tap the reset button to enter bootloader mode
+              a. Drag and drop the left half `.uf2` file onto the mounted drive
+              b. you will see an error about unmounting (it can be ignored)
+              c. Unplug left shield
+            7. Connect the right shield to your computer and double tap the reset button to enter bootloader mode
+              a. Drag and drop the right half `.uf2` file onto the mounted drive
+              b. you will see an error about unmounting (it can be ignored)
+              c. Unplug right shield
+            8. In bluetooth settings on your computer, forget the keyboard
+            9. Restart both shields and repair them with your computer
+            10. YOU ARE DONE!
 
             ### Changes:
             ${{ github.event.head_commit.message }}
