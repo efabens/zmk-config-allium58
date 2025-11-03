@@ -46,17 +46,35 @@ jobs:
           # Get most recent successful run
           workflow_conclusion: success
 
+      - name: Generate release tag
+        id: tag
+        run: |
+          # Generate tag based on date and commit count
+          DATE=$(date +'%Y%m%d')
+          COUNT=$(git rev-list --count HEAD)
+          TAG="v${DATE}.${COUNT}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Generated tag: $TAG"
+
       - name: Gather release assets
         run: |
-          # Copy firmware files
-          find firmware-artifacts -name "*.uf2" -exec cp {} release-assets/ \;
+          # Create firmware bundle directory
+          mkdir -p firmware-bundle
 
-          # Copy keymap PDF
+          # Copy firmware files to bundle
+          find firmware-artifacts -name "*.uf2" -exec cp {} firmware-bundle/ \;
+
+          # Copy keymap PDF to bundle and release assets
+          cp keymap-artifacts/*.pdf firmware-bundle/ || echo "No PDF found"
           cp keymap-artifacts/*.pdf release-assets/ || echo "No PDF found"
 
-          # Copy committed SVG and YAML from repo
+          # Create firmware bundle zip with tag suffix
+          cd firmware-bundle
+          zip -r ../release-assets/allium58-firmware-bundle-${{ steps.tag.outputs.tag }}.zip .
+          cd ..
+
+          # Copy keymap SVG (but NOT yaml)
           cp keymap-drawer/*.svg release-assets/ || echo "No SVG found"
-          cp keymap-drawer/*.yaml release-assets/ || echo "No YAML found"
 
           echo "Release assets:"
           ls -lh release-assets/
@@ -85,16 +103,6 @@ jobs:
       # - BOM (bill of materials)
       # === END CUSTOM FILES SECTION ===
 
-      - name: Generate release tag
-        id: tag
-        run: |
-          # Generate tag based on date and commit count
-          DATE=$(date +'%Y%m%d')
-          COUNT=$(git rev-list --count HEAD)
-          TAG="v${DATE}.${COUNT}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "Generated tag: $TAG"
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -107,40 +115,42 @@ jobs:
             **Commit:** ${{ github.sha }}
 
             ### Included Files:
-            - `*_left-*.uf2` - Left keyboard half firmware
-            - `*_right-*.uf2` - Right keyboard half firmware
+            - `allium58-firmware-bundle-${{ steps.tag.outputs.tag }}.zip` - **Complete firmware package** containing:
+              - Left keyboard half firmware
+              - Right keyboard half firmware
+              - Settings reset firmware
+              - Keymap PDF reference
+            - `lily58.pdf` - Keymap document (printable reference)
             - `lily58.svg` - Keymap visual diagram (scalable vector)
-            - `lily58.pdf` - Keymap document (printable)
-            - `lily58.yaml` - Parsed keymap data
 
             ### Flashing Instructions:
-            1. Download the appropriate `.uf2` file for each keyboard half
+            1. Download and extract `allium58-firmware-bundle-${{ steps.tag.outputs.tag }}.zip`
             2. Turn off both shields
-            2. Connect the left shield to your computer and double tap the reset button to enter bootloader mode
-            3. If you are only updating keymaps (no display or settings changes)
+            3. Connect the left shield to your computer and double tap the reset button to enter bootloader mode
+            4. If you are only updating keymaps (no display or settings changes)
               a. Drag and drop the left `.uf2` file onto the mounted drive
               b. you will see an error about unmounting (it can be ignored)
               c. Unplug and restart both shields and it should Connect
               d. YOU ARE DONE! No need to repeat for the other half
-            4. If you are updating display or settings as well
+            5. If you are updating display or settings as well
               a. Drag and drop the `settings_reset-nice_nano_v2-zmk.uf2` file onto the mounted drive
               b. you will see an error about unmounting (it can be ignored)
               c. Unplug left shield
-            5. Connect the right shield to your computer and double tap the reset button to enter bootloader mode
+            6. Connect the right shield to your computer and double tap the reset button to enter bootloader mode
               a. Drag and drop the `settings_reset-nice_nano_v2-zmk.uf2` file onto the mounted drive
               b. you will see an error about unmounting (it can be ignored)
               c. Unplug right shield
-            6. Reconnect left shield to your computer and double tap the reset button to enter bootloader mode
+            7. Reconnect left shield to your computer and double tap the reset button to enter bootloader mode
               a. Drag and drop the left half `.uf2` file onto the mounted drive
               b. you will see an error about unmounting (it can be ignored)
               c. Unplug left shield
-            7. Connect the right shield to your computer and double tap the reset button to enter bootloader mode
+            8. Connect the right shield to your computer and double tap the reset button to enter bootloader mode
               a. Drag and drop the right half `.uf2` file onto the mounted drive
               b. you will see an error about unmounting (it can be ignored)
               c. Unplug right shield
-            8. In bluetooth settings on your computer, forget the keyboard
-            9. Restart both shields and repair them with your computer
-            10. YOU ARE DONE!
+            9. In bluetooth settings on your computer, forget the keyboard
+            10. Restart both shields and repair them with your computer
+            11. YOU ARE DONE!
 
             ### Changes:
             ${{ github.event.head_commit.message }}
