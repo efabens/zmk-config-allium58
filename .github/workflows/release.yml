@@ -1,0 +1,130 @@
+name: Create Release
+
+on:
+  # Trigger after Draw Keymaps workflow completes successfully on main branch
+  workflow_run:
+    workflows: ["Draw ZMK Keymaps"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Only create release if the draw-keymaps workflow succeeded (which only runs if build succeeded)
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: write
+      actions: read  # Needed to download artifacts from other workflows
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tag generation
+
+      - name: Create release assets directory
+        run: mkdir -p release-assets
+
+      - name: Download firmware artifacts from build workflow
+        uses: actions/download-artifact@v4
+        with:
+          # Download artifacts from the triggering workflow run
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: firmware-artifacts
+
+      - name: Download keymap PDF from draw-keymaps workflow
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: draw-keymaps.yml
+          branch: main
+          name: keymap-drawer-pdf
+          path: keymap-artifacts
+          # Get most recent successful run
+          workflow_conclusion: success
+
+      - name: Gather release assets
+        run: |
+          # Copy firmware files
+          find firmware-artifacts -name "*.uf2" -exec cp {} release-assets/ \;
+
+          # Copy keymap PDF
+          cp keymap-artifacts/*.pdf release-assets/ || echo "No PDF found"
+
+          # Copy committed SVG and YAML from repo
+          cp keymap-drawer/*.svg release-assets/ || echo "No SVG found"
+          cp keymap-drawer/*.yaml release-assets/ || echo "No YAML found"
+
+          echo "Release assets:"
+          ls -lh release-assets/
+
+      # === ADD CUSTOM DOCUMENTATION FILES HERE ===
+      # To include additional files in releases (like flashing instructions,
+      # layer documentation, troubleshooting guides), add them here:
+      #
+      # Example:
+      #   - name: Add custom documentation
+      #     run: |
+      #       cp docs/FLASHING.md release-assets/
+      #       cp docs/LAYERS.md release-assets/
+      #       cp docs/TROUBLESHOOTING.pdf release-assets/
+      #       cp docs/images/* release-assets/
+      #
+      # Any files placed in release-assets/ will be automatically included
+      # in the GitHub release created below.
+      #
+      # Common documentation to include:
+      # - Flashing instructions (how to install firmware)
+      # - Layer documentation (detailed explanation of each layer)
+      # - Troubleshooting guide (common issues and solutions)
+      # - Build instructions (how to modify and rebuild)
+      # - Hardware assembly guide
+      # - BOM (bill of materials)
+      # === END CUSTOM FILES SECTION ===
+
+      - name: Generate release tag
+        id: tag
+        run: |
+          # Generate tag based on date and commit count
+          DATE=$(date +'%Y%m%d')
+          COUNT=$(git rev-list --count HEAD)
+          TAG="v${DATE}.${COUNT}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Generated tag: $TAG"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          body: |
+            ## Allium58 Firmware Release
+
+            **Build Date:** ${{ github.event.head_commit.timestamp }}
+            **Commit:** ${{ github.sha }}
+
+            ### Included Files:
+            - `*_left-*.uf2` - Left keyboard half firmware
+            - `*_right-*.uf2` - Right keyboard half firmware
+            - `lily58.svg` - Keymap visual diagram (scalable vector)
+            - `lily58.pdf` - Keymap document (printable)
+            - `lily58.yaml` - Parsed keymap data
+
+            ### Flashing Instructions:
+            1. Download the appropriate `.uf2` file for each keyboard half
+            2. Connect keyboard via USB while holding the reset button
+            3. Drag and drop the `.uf2` file onto the mounted drive
+            4. Repeat for the other half
+
+            ### Changes:
+            ${{ github.event.head_commit.message }}
+
+            ---
+            Auto-generated from commit ${{ github.sha }}
+          files: release-assets/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

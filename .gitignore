@@ -1,0 +1,19 @@
+# Local keymap generation artifacts (in repo root)
+# These are for local testing - workflow generates in keymap-drawer/ folder
+/keymap.yaml
+/keymap.svg
+/keymap.pdf
+/keymap.png
+
+# Release assets folder (generated during release workflow)
+/release-assets/
+
+# macOS
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

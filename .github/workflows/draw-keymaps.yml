@@ -1,13 +1,78 @@
 name: Draw ZMK Keymaps
-on: [push, workflow_dispatch]
+
+on:
+  # Only run after Build workflow succeeds
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+  workflow_dispatch:
 
 jobs:
   draw:
-    uses: caksoylar/keymap-drawer/.github/workflows/draw-zmk.yml@main
-    permissions:
-      contents: write
-    with:
-      keymap_patterns: "config/*.keymap"
-      output_folder: "keymap-drawer"
-      west_config_path: "config"
-      commit_message: "[Draw] Update keymap images"
+    runs-on: ubuntu-latest
+    # Only run if the build workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install keymap-drawer
+        run: pipx install keymap-drawer
+
+      - name: Install west
+        run: pipx install west
+
+      - name: Fetch west modules
+        run: |
+          west init -l config
+          west config --local manifest.project-filter " -zmk,-zephyr"
+          west update --fetch-opt=--filter=tree:0
+
+      - name: Install Inkscape for PDF conversion
+        run: sudo apt-get update && sudo apt-get install -y inkscape
+
+      - name: Create output directory
+        run: mkdir -p keymap-drawer
+
+      - name: Generate keymap diagrams
+        run: |
+          # Configuration file if it exists
+          config_arg=""
+          if [ -f "keymap_drawer.config.yaml" ]; then
+            config_arg="-c keymap_drawer.config.yaml"
+          fi
+
+          # Process each keymap file
+          for keymap_file in config/*.keymap; do
+            keyboard=$(basename -s .keymap "$keymap_file")
+            echo "Generating diagrams for $keyboard..."
+
+            # Parse keymap to YAML
+            keymap $config_arg parse -z "$keymap_file" > "keymap-drawer/${keyboard}.yaml"
+
+            # Draw SVG
+            keymap $config_arg draw "keymap-drawer/${keyboard}.yaml" > "keymap-drawer/${keyboard}.svg"
+
+            # Convert SVG to PDF
+            inkscape --export-type=pdf "keymap-drawer/${keyboard}.svg" -o "keymap-drawer/${keyboard}.pdf"
+
+            echo "✓ Generated ${keyboard}.yaml, ${keyboard}.svg, ${keyboard}.pdf"
+          done
+
+      - name: Commit SVG and YAML to repository
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: 'keymap-drawer/*.svg keymap-drawer/*.yaml'
+          commit_message: 'docs: update keymap diagrams [skip ci]'
+          commit_user_name: 'github-actions[bot]'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Upload PDF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keymap-drawer-pdf
+          path: keymap-drawer/*.pdf
+          retention-days: 90
