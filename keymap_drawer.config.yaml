@@ -3,7 +3,7 @@
 
 draw_config:
   # Use dark mode for diagrams
-  dark_mode: false
+  dark_mode: true
 
   # Key dimensions
   key_w: 60
