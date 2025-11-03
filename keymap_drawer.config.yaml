@@ -1,0 +1,23 @@
+# keymap-drawer configuration
+# Customize the appearance of your keymap diagrams
+
+draw_config:
+  # Use dark mode for diagrams
+  dark_mode: false
+
+  # Key dimensions
+  key_w: 60
+  key_h: 56
+
+  # Split keyboard spacing
+  split_gap: 30
+
+  # Show key labels
+  append_colon_to_layer_header: true
+
+parse_config:
+  # Mark raw keycodes that should be ignored
+  skip_binding_types: []
+
+  # Behaviors to treat as modifiers
+  modifier_behaviors: ['&kp']
