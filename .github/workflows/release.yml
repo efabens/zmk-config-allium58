@@ -28,12 +28,13 @@ jobs:
         run: mkdir -p release-assets
 
       - name: Download firmware artifacts from build workflow
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v3
         with:
-          # Download artifacts from the triggering workflow run
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          workflow: build.yml
+          branch: main
           path: firmware-artifacts
+          # Get most recent successful run
+          workflow_conclusion: success
 
       - name: Download keymap PDF from draw-keymaps workflow
         uses: dawidd6/action-download-artifact@v3
