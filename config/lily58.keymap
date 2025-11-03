@@ -15,14 +15,105 @@
 #define raise_layer 2
 #define adjust_layer 3
 #define extra 4
+#define gaming 5
 
 
 / {
+    behaviors {
+        // Left home row mods (timerless/urob-style)
+        // Mac order: Ctrl, Alt, Cmd, Shift (C-A-G-S)
+        bhv_hrm_left: bhv_hrm_left {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <280>;
+            quick-tap-ms = <175>;
+            require-prior-idle-ms = <150>;
+            bindings = <&kp>, <&kp>;
+            hold-trigger-key-positions = <6 7 8 9 10 11 18 19 20 21 22 23 30 31 32 33 34 35 43 44 45 46 47 48 49 54 55 56 57>;
+            hold-trigger-on-release;
+        };
+
+        // Right home row mods (timerless/urob-style)
+        // Mac order: Shift, Cmd, Alt, Ctrl (S-G-A-C)
+        bhv_hrm_right: bhv_hrm_right {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <280>;
+            quick-tap-ms = <175>;
+            require-prior-idle-ms = <150>;
+            bindings = <&kp>, <&kp>;
+            hold-trigger-key-positions = <0 1 2 3 4 5 12 13 14 15 16 17 24 25 26 27 28 29 36 37 38 39 40 41 42 50 51 52 53>;
+            hold-trigger-on-release;
+        };
+
+        // Pinky shift: tap for Caps Word, hold for Shift
+        pinky_shift: pinky_shift {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <125>;
+            bindings = <&kp>, <&caps_word>;
+        };
+    };
+
+    macros {
+        // Tmux prefix: Ctrl+B
+        tmux_prefix: tmux_prefix {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&macro_press &kp LCTRL>
+                     , <&macro_tap &kp B>
+                     , <&macro_release &kp LCTRL>;
+        };
+
+        // macOS tiling: Ctrl+Opt+Left
+        tile_left: tile_left {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&macro_press &kp LCTRL &kp LALT>
+                     , <&macro_tap &kp LEFT>
+                     , <&macro_release &kp LCTRL &kp LALT>;
+        };
+
+        // macOS tiling: Ctrl+Opt+Right
+        tile_right: tile_right {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&macro_press &kp LCTRL &kp LALT>
+                     , <&macro_tap &kp RIGHT>
+                     , <&macro_release &kp LCTRL &kp LALT>;
+        };
+
+        // macOS tiling: Ctrl+Opt+F (fullscreen/maximize)
+        tile_max: tile_max {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&macro_press &kp LCTRL &kp LALT>
+                     , <&macro_tap &kp F>
+                     , <&macro_release &kp LCTRL &kp LALT>;
+        };
+    };
+
+    combos {
+        compatible = "zmk,combos";
+        // Safety combo: Press BT_SEL 0 + BT_SEL 1 together to clear all Bluetooth bonds
+        // This requires being on Adjust layer (Lower+Raise held), then pressing two keys together
+        combo_bt_clr_all {
+            timeout-ms = <50>;
+            key-positions = <1 2>;  // BT_SEL 0 (pos 1) + BT_SEL 1 (pos 2) on Adjust layer
+            bindings = <&bt BT_CLR_ALL>;
+            layers = <3>;  // Only active on Adjust layer
+        };
+    };
+
     keymap {
         compatible = "zmk,keymap";
 
         default_layer {
-            display-name = "Base";
+            display-name = "QWERTY";
 
 // ------------------------------------------------------------------------------------------------------------
 // |  ESC  |  1  |  2  |  3   |  4   |  5   |                   |  6   |  7    |  8    |  9   |   0   |   `   |
@@ -33,63 +124,64 @@
             bindings = <
 &kp ESC   &kp N1 &kp N2 &kp N3   &kp N4   &kp N5                     &kp N6 &kp N7   &kp N8    &kp N9  &kp N0   &kp GRAVE
 &kp TAB   &kp Q  &kp W  &kp E    &kp R    &kp T                      &kp Y  &kp U    &kp I     &kp O   &kp P    &kp MINUS
-&kp LCTRL &kp A  &kp S  &kp D    &kp F    &kp G                      &kp H  &kp J    &kp K     &kp L   &kp SEMI &kp SQT
-&kp LSHFT &kp Z  &kp X  &kp C    &kp V    &kp B  &kp LBKT   &kp RBKT &kp N  &kp M    &kp COMMA &kp DOT &kp FSLH &kp RSHFT
+&kp LCTRL &bhv_hrm_left LCTRL A &bhv_hrm_left LALT S &bhv_hrm_left LGUI D &bhv_hrm_left LSHFT F &kp G                      &kp H  &bhv_hrm_right RSHFT J &bhv_hrm_right RGUI K &bhv_hrm_right RALT L &bhv_hrm_right RCTRL SEMI &kp SQT
+&pinky_shift LSHFT 0 &kp Z  &kp X  &kp C    &kp V    &kp B  &kp LBKT   &kp RBKT &kp N  &kp M    &kp COMMA &kp DOT &kp FSLH &pinky_shift RSHFT 0
                         &kp LALT &kp LGUI &mo 1  &kp SPACE  &kp RET  &mo 2  &kp BSPC &kp RGUI
             >;
         };
 
         lower_layer {
-            display-name = "Lower";
+            display-name = "SYM/F-KEY";
 // ------------------------------------------------------------------------------------------------------------
-// | BTCLR | BT1 | BT2 |  BT3 |  BT4 |  BT5 |                   |      |       |       |      |       |       |
+// |       |     |     |      |      |      |                   | UNLCK|       |       |      |       |       |
 // |  F1   |  F2 |  F3 |  F4  |  F5  |  F6  |                   |  F7  |  F8   |  F9   |  F10 |  F11  |  F12  |
 // |   `   |  !  |  @  |  #   |  $   |  %   |                   |  ^   |  &    |  *    |  (   |   )   |   ~   |
-// |       |     |     |      |      |      |        |  |       |      |  _    |  +    |  {   |   }   |  "|"  |
-//                     |      |      |      |        |  |       |      |       |       |
+// |       | EP_ON|EP_OFF|EP_TOG|    |      |        |  |       |      |  _    |  +    |  {   |   }   |  "|"  |
+//                     |      |      |      |  BSPC  |  |  DEL  |      |       |       |
             bindings = <
-&bt BT_CLR_ALL &bt BT_SEL 0     &bt BT_SEL 1      &bt BT_SEL 2      &bt BT_SEL 3 &bt BT_SEL 4                 &studio_unlock    &trans    &trans    &trans    &trans    &trans
+&trans         &trans           &trans            &trans            &trans       &trans                       &studio_unlock &trans    &trans    &trans    &trans    &trans
 &kp F1         &kp F2           &kp F3            &kp F4            &kp F5       &kp F6                       &kp F7    &kp F8    &kp F9    &kp F10   &kp F11   &kp F12
 &kp GRAVE      &kp EXCL         &kp AT            &kp HASH          &kp DOLLAR   &kp PRCNT                    &kp CARET &kp AMPS  &kp ASTRK &kp LPAR  &kp RPAR  &kp TILDE
 &trans         &ext_power EP_ON &ext_power EP_OFF &ext_power EP_TOG &trans       &trans    &trans   &trans    &trans    &kp MINUS &kp PLUS  &kp LBRC  &kp RBRC  &kp PIPE
-                                              &trans            &trans       &trans    &trans   &trans    &trans    &trans    &trans
+                                              &trans            &trans       &trans    &kp BSPC &kp DEL  &trans    &trans    &trans
             >;
         };
 
         raise_layer {
-            display-name = "Raise";
+            display-name = "NAV/TMUX";
 // ------------------------------------------------------------------------------------------------------------
-// |       |     |     |      |      |      |                   |      |       |       |      |       |       |
+// |       |     |     |TMUX  | %    | "    |                   |      |       |TILE_L|TILE_R|TILE_M |       |
 // |   `   |  1  |  2  |  3   |  4   |  5   |                   |  6   |   7   |   8   |  9   |   0   |       |
-// |   F1  |  F2 |  F3 |  F4  |  F5  |  F6  |                   |      |   <-  |   v   |  ^   |  ->   |       |
+// |   F1  |  F2 |  F3 |  F4  |  F5  | TAB  |                   |  <-  |   v   |   ^   |  ->  |       |       |
 // |   F7  |  F8 |  F9 |  F10 |  F11 |  F12 |        |  |       |  +   |   -   |   =   |  [   |   ]   |   \   |
-//                     |      |      |      |        |  |       |      |       |       |
+//                     |      |      |      |  BSPC  |  |  DEL  |      |       |       |
             bindings = <
-&trans    &trans &trans &trans  &trans  &trans                       &trans      &trans    &trans    &trans    &trans    &trans
-&kp GRAVE &kp N1 &kp N2 &kp N3  &kp N4  &kp N5                       &kp N6      &kp N7    &kp N8    &kp N9    &kp N0    &trans
-&kp F1    &kp F2 &kp F3 &kp F4  &kp F5  &kp F6                       &kp LEFT    &kp DOWN  &kp UP    &kp RIGHT &trans    &trans
-&kp F7    &kp F8 &kp F9 &kp F10 &kp F11 &kp F12   &trans   &trans    &kp KP_PLUS &kp MINUS &kp EQUAL &kp LBKT  &kp RBKT  &kp BSLH
-                        &trans  &trans  &trans    &trans   &trans    &trans      &trans    &trans
+&trans    &trans &trans &tmux_prefix &kp PRCNT &kp DQT             &trans     &trans     &tile_left &tile_right &tile_max &trans
+&kp GRAVE &kp N1 &kp N2 &kp N3       &kp N4    &kp N5              &kp N6     &kp N7     &kp N8     &kp N9      &kp N0    &trans
+&kp F1    &kp F2 &kp F3 &kp F4       &kp F5    &kp TAB             &kp LEFT   &kp DOWN   &kp UP     &kp RIGHT   &trans    &trans
+&kp F7    &kp F8 &kp F9 &kp F10      &kp F11   &kp F12  &trans  &trans  &kp KP_PLUS &kp MINUS &kp EQUAL &kp LBKT &kp RBKT  &kp BSLH
+                        &trans       &trans    &trans   &kp BSPC &kp DEL &trans     &trans     &trans
             >;
         };
         adjust_layer {
-            display-name = "Adjust";
+            display-name = "SYS/BT";
 // ------------------------------------------------------------------------------------------------------------
+// |       | BT0 | BT1 |  BT2 |  BT3 |  BT4 |                   |      |       |       |      |       |       |
 // |       |     |     |      |      |      |                   |      |       |       |      |       |       |
-// |   `   |  1  |  2  |  3   |  4   |  5   |                   |  6   |   7   |   8   |  9   |   0   |       |
-// |   F1  |  F2 |  F3 |  F4  |  F5  |  F6  |                   |      |   <-  |   v   |  ^   |  ->   |       |
-// |   F7  |  F8 |  F9 |  F10 |  F11 |  F12 |        |  |       |  +   |   -   |   =   |  [   |   ]   |   \   |
+// | EP_ON |EP_OFF|EP_TOG|GAMING|    |      |                   |      |       |       |      |       |       |
+// |       |     |     |      |      |      |        |  |       |      |       |       |      |       |       |
 //                     |      |      |      |        |  |       |      |       |       |
+// NOTE: BT_CLR_ALL requires combo (BT0+BT1 simultaneously) for safety
             bindings = <
-&trans    &trans &trans &trans  &trans  &trans                       &trans      &trans    &trans    &trans   &trans    &trans
-&kp GRAVE &kp N1 &kp N2 &kp N3  &kp N4  &kp N5                       &kp N6      &kp N7    &kp N8    &kp N9   &kp N0    &trans
-&kp F1    &kp F2 &kp F3 &kp F4  &kp F5  &kp F6                       &trans      &kp LEFT  &kp DOWN  &kp UP   &kp RIGHT &trans
-&kp F7    &kp F8 &kp F9 &kp F10 &kp F11 &kp F12   &trans   &trans    &kp KP_PLUS &kp MINUS &kp EQUAL &kp LBKT &kp RBKT  &kp BSLH
-                        &trans  &trans  &trans    &trans   &trans    &trans      &trans    &trans
+&trans         &bt BT_SEL 0     &bt BT_SEL 1      &bt BT_SEL 2      &bt BT_SEL 3 &bt BT_SEL 4                 &trans    &trans    &trans    &trans    &trans    &trans
+&trans         &trans           &trans            &trans            &trans       &trans                       &trans    &trans    &trans    &trans    &trans    &trans
+&ext_power EP_ON &ext_power EP_OFF &ext_power EP_TOG &tog 5        &trans       &trans                       &trans    &trans    &trans    &trans    &trans    &trans
+&trans         &trans           &trans            &trans            &trans       &trans    &trans   &trans    &trans    &trans    &trans    &trans    &trans    &trans
+                                              &trans            &trans       &trans    &trans   &trans    &trans    &trans    &trans
             >;
         };
         extra {
-            display-name = "Mouse";
+            display-name = "MOUSE";
 // ------------------------------------------------------------------------------------------------------------
 // |       |     |     |      |      |      |                   |      |       |       |      |       |       |
 // |   `   |  1  |  2  |  3   |  4   |  5   |                   |  6   |   7   |   8   |  9   |   0   |       |
@@ -103,6 +195,32 @@
 &trans    &trans &trans &trans  &trans  &msc SCRL_UP   &mkp LCLK      &mkp RCLK    &trans       &trans    &trans    &trans   &trans    &trans
                         &trans  &trans  &trans    &trans   &trans    &trans      &trans    &trans
             >;
+        };
+
+        gaming {
+            display-name = "> GAME <";
+// ------------------------------------------------------------------------------------------------------------
+// |  ESC  |  1  |  2  |  3   |  4   |  5   |                   |  6   |   7   |   8   |  9   |   0   |   `   |
+// |  TAB  |  Q  |  W  |  E   |  R   |  T   |                   |  Y   |   U   |   I   |  O   |   P   |   -   |
+// | CTRL  |  A  |  S  |  D   |  F   |  G   |                   |  H   |   J   |   K   |  L   |   ;   |   '   |
+// | SHIFT |  Z  |  X  |  C   |  V   |  B   |   "["  |  |  "]"  |  N   |   M   |   ,   |  .   |   /   | SHIFT |
+//                     | ALT  | GUI  | ADJST| SPACE  |  | ENTER |      | BSPC  | GUI   |
+            bindings = <
+&kp ESC   &kp N1   &kp N2 &kp N3   &kp N4   &kp N5                     &kp N6 &kp N7 &kp N8    &kp N9  &kp N0   &kp GRAVE
+&kp TAB   &kp Q    &kp W  &kp E    &kp R    &kp T                      &kp Y  &kp U  &kp I     &kp O   &kp P    &kp MINUS
+&kp LCTRL &kp A    &kp S  &kp D    &kp F    &kp G                      &kp H  &kp J  &kp K     &kp L   &kp SEMI &kp SQT
+&kp LSHFT &kp Z    &kp X  &kp C    &kp V    &kp B  &kp LBKT   &kp RBKT &kp N  &kp M  &kp COMMA &kp DOT &kp FSLH &kp RSHFT
+                          &kp LALT &kp LGUI &mo 3  &kp SPACE  &kp RET  &trans &kp BSPC &kp RGUI
+            >;
+        };
+    };
+
+    conditional_layers {
+        compatible = "zmk,conditional-layers";
+        // Activate Adjust layer when both Lower and Raise are held
+        tri_layer {
+            if-layers = <1 2>;  // Lower (1) + Raise (2)
+            then-layer = <3>;   // Adjust (3)
         };
     };
 };
