@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:zmk.dev)",
+      "WebFetch(domain:nicekeyboards.com)",
+      "Bash(inkscape:*)",
+      "Bash(git add:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
