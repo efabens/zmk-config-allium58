@@ -27,7 +27,6 @@ jobs:
 
       - name: Fetch west modules
         run: |
-          west init -l config
           west config --local manifest.project-filter " -zmk,-zephyr"
           west update --fetch-opt=--filter=tree:0
 
