@@ -138,8 +138,8 @@ layers:
   - '4'
   - '5'
   - '6'
-  - '7'
-  - '8'
+  - '&mkp LCLK'
+  - '&mkp RCLK'
   - '9'
   - '0'
   - {t: ▽, type: trans}
