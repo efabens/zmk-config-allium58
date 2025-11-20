@@ -175,7 +175,7 @@ layers:
   - BSPC
   - DEL
   - {type: held}
-  - {t: ▽, type: trans}
+  - {t: SLCK, h: SLCK}
   - {t: ▽, type: trans}
   SYS/BT:
   - {t: ▽, type: trans}
