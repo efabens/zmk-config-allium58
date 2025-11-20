@@ -6,7 +6,8 @@
       "Bash(inkscape:*)",
       "Bash(git add:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run watch:*)"
+      "Bash(gh run watch:*)",
+      "Bash(gh release:*)"
     ],
     "deny": [],
     "ask": []
