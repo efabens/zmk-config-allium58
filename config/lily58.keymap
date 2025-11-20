@@ -57,6 +57,15 @@
             quick-tap-ms = <125>;
             bindings = <&kp>, <&caps_word>;
         };
+
+        // Scroll lock: tap to toggle, hold to activate (off on release)
+        scroll_lock_ht: scroll_lock_ht {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            bindings = <&kp>, <&kt>;
+        };
     };
 
     macros {
@@ -160,7 +169,7 @@
 &kp GRAVE &kp N1 &kp N2 &kp N3       &kp N4    &kp N5              &kp N6     &mkp LCLK  &mkp RCLK  &kp N9      &kp N0    &trans
 &kp F1    &kp F2 &kp F3 &kp F4       &kp F5    &kp TAB             &kp LEFT   &kp DOWN   &kp UP     &kp RIGHT   &trans    &trans
 &kp F7    &kp F8 &kp F9 &kp F10      &kp F11   &kp F12  &trans  &trans  &kp KP_PLUS &kp MINUS &kp EQUAL &kp LBKT &kp RBKT  &kp BSLH
-                        &trans       &trans    &trans   &kp BSPC &kp DEL &trans     &trans     &trans
+                        &trans       &trans    &trans   &kp BSPC &kp DEL &trans     &scroll_lock_ht SLCK SLCK     &trans
             >;
         };
         adjust_layer {
